@@ -44,28 +44,66 @@
 
 //-------------- Завдання 2: Software debounce через таймер ----------------
 
-#define DEBOUNCE_MS 50
+
+// #define DEBOUNCE_MS 50
+
+// volatile bool BtnInterrupt = false;
+
+// uint32_t button_counter = 0;
+// uint32_t LastPressTime = 0;
+
+// void button_isr(void *arg)
+// {
+//     BtnInterrupt = true;
+// }
+
+// void onButton(void)
+// {
+//     const uint32_t now = (uint32_t)(esp_timer_get_time() / 1000);
+
+//     if (now - LastPressTime >= DEBOUNCE_MS)
+//     {
+//         LastPressTime = now;
+//         button_counter++;
+//         printf("Button Pressed! Count: %" PRIu32 "\n", button_counter);
+//     }
+// }
+
+// void app_main(void)
+// {
+//     gpio_set_direction(BTN_PIN, GPIO_MODE_INPUT);
+//     gpio_set_pull_mode(BTN_PIN, GPIO_PULLUP_ONLY);
+//     gpio_set_intr_type(BTN_PIN, GPIO_INTR_NEGEDGE);
+
+//     gpio_install_isr_service(0);
+//     gpio_isr_handler_add(BTN_PIN, button_isr, NULL);
+
+//     printf("Setuped_2\n");
+
+//     while (1)
+//     {
+//         if (BtnInterrupt)
+//         {
+//             BtnInterrupt = false;
+//             onButton();
+//         }
+
+//         vTaskDelay(pdMS_TO_TICKS(10));
+//     }
+// }
+
+
+// --------------- Завдання 3: Debounce через перевірку рівня ---------------
+
 
 volatile bool BtnInterrupt = false;
 
-uint32_t button_counter = 0;
-uint32_t LastPressTime = 0;
+bool buttonPressed = false;
+uint32_t buttonCounter = 0;
 
 void button_isr(void *arg)
 {
     BtnInterrupt = true;
-}
-
-void onButton(void)
-{
-    const uint32_t now = (uint32_t)(esp_timer_get_time() / 1000);
-
-    if (now - LastPressTime >= DEBOUNCE_MS)
-    {
-        LastPressTime = now;
-        button_counter++;
-        printf("Button Pressed! Count: %" PRIu32 "\n", button_counter);
-    }
 }
 
 void app_main(void)
@@ -77,19 +115,27 @@ void app_main(void)
     gpio_install_isr_service(0);
     gpio_isr_handler_add(BTN_PIN, button_isr, NULL);
 
-    printf("Setuped_2\n");
+    printf("Setuped_3\n");
 
     while (1)
     {
         if (BtnInterrupt)
         {
             BtnInterrupt = false;
-            onButton();
+
+            if (gpio_get_level(BTN_PIN) == 0 && !buttonPressed)
+            {
+                buttonPressed = true;
+                buttonCounter++;
+                printf("Button Pressed! Count: %" PRIu32 "\n", buttonCounter);
+            }
         }
 
-        vTaskDelay(pdMS_TO_TICKS(10));
+        if (buttonPressed && gpio_get_level(BTN_PIN) == 1)
+        {
+            buttonPressed = false;
+        }
+
+        vTaskDelay(10);
     }
 }
-
-
-// --------------- Завдання 3: Debounce через перевірку рівня ---------------
